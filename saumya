@@ -1,0 +1,174 @@
+   <h1>                    GLOBAL TERRORISM <h1>
+
+<H5>Project by SAUMYA GUPTA <H5>
+
+<h3>INTRODUCTION <h3>
+
+Terrorism can be broadly defined as utilization of violence in order to attain political or ideological goals.  Many countries and vast regions have constantly been subjected to such practices of coercion which leads to economic destruction of property and lives.
+
+
+I recently came across a dataset representing global terrorism which inspired me to perfom exploratory data analysis on the same and identify the situation better.
+I've answered questions frequently thought-about and used data visualization for better understanding.
+
+The dataset focuses on terrorism hotzones, weapons and attack methods used by terrorist groups and other important details as well.
+
+<h3>SOURCES AND IMPORTS<h3>
+
+SOURCE: 
+The sources for raw data used as been taken from https://bit.ly/2TK5Xn5
+
+IMPORTS:
+    import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns
+import plotly.express as px
+
+__loading dataset
+
+df=pd.read_csv('C:\\Users\\SAUMYA\\AppData\\Local\\Temp\\Temp1_Global Terrorism - START data.zip\\terrorism.csv',encoding='latin1',low_memory=False)
+df
+
+<h1>UNDERSTANDING THE DATASET<h1>
+
+df.sample(5)
+
+df.shape
+
+df.columns.values
+
+df.describe(include='all')
+
+df.rename(columns={'iyear':'Year','imonth':'Month','iday':'Day','region_txt':'Region','attacktype1_txt':'Attacktype','nkill':'Killed','target1':'Target','nwound':'Wounded','summary':'Summary','gname':'Group','country_txt':'Country','targtype1_txt':'Targettype','weaptype1_txt':'Weapontype','motive':'Motive'},inplace=True)
+
+df.columns
+
+<h1>FOCUSING ON SPECIFIC COLUMNS<h1>
+
+df.Attacktype
+
+df.Summary
+
+df['attacktype2_txt'].isna().sum()
+
+<h5>Clearly, many columns have numerous null values which hence calls for data cleaning<h5>
+
+<h1> DATA CLEANING <h1>
+
+td=df[['Year','Month','Day','Region','Attacktype','Killed','Target','Wounded','Summary','Country','Group','Targettype','Weapontype','Motive']]
+td.head()
+#filtering out important columns required for specific analysis
+
+ <h5>Now here, region 'Australasia & Oceania' has has experienced least attacks. Thus, are filtered out.<h5>
+
+td.loc[td['Region']==td['Region'].min()]
+
+td.drop(td[td['Group']=='Australasia & Oceania'].index, inplace = True)
+
+<h1>DATA EXPLORING <h1>
+
+plt.figure(figsize = (7,4))
+sns.heatmap(td.corr(), cmap="YlGnBu",annot=True,xticklabels='auto',yticklabels='auto',linewidth=1)
+
+<h2> QUESTION: What is the most commonly used attack type in terorrist attacks?<h2>
+
+print(df['Attacktype'].value_counts())
+
+<h5>As shown, Bombing/Explosion caused the most attacks which is further illustrated below via a pie chart<h5>
+
+df['Attacktype'].value_counts().plot(kind = 'pie', figsize=(11,11)).legend(loc='upper right',bbox_to_anchor=(1.3,0.9))
+
+<h1> QUESTION: Which year experienced the highest number of terorrist attacks?<h1>
+
+print(df['Year'].value_counts().index[0])
+
+x_year=td['Year'].unique()
+y_count_years=df['Year'].value_counts().sort_index()
+plt.figure(figsize=(16,10))
+sns.barplot(x=x_year,y=y_count_years,palette = 'vlag',edgecolor='k')
+plt.xticks(rotation=45)
+plt.xlabel('Year',fontsize=15)
+plt.ylabel('NUmber of attacks',fontsize=15)
+plt.title('Attacks per year',fontsize=20)
+plt.show()
+
+<h2>QUESTION: Name the terrorism hotzones<h2>
+
+<h3>Countrywise:<h3>
+
+df['Country'].value_counts().head(10)
+
+<h4>Iraq is the worst hit country with more than 24600 attacks between 1970 to 2017<h4>
+
+iraq=df[df['Country']=='Iraq']
+print("Killed: ",iraq.Killed.sum())
+print("Wounded: ",iraq.Wounded.sum())
+
+<h3>Regionwise:<h3>
+
+pd.crosstab(df.Year,df.Region).plot(kind='line',linewidth='4.5',figsize=(22,10))
+plt.title('Terrorist attacks by region annually',fontsize=20)
+plt.ylabel('Number of attacks',fontsize=15)
+plt.xlabel('Year',fontsize=15)
+plt.grid()
+plt.xticks((1970,1975,1980,1985,1990,1995,2000,2005,2010,2014,2015,2017))
+ax=plt.axes()
+ax.set_facecolor("k")
+#figure(faceccolor='color')
+
+<h4>Clearly, Middle East and North Africa are the hottest zones of terrorism,
+    with South Asia and sub-saharan Africa 
+    on a close second and third respectively<h4> 
+
+attack=df.groupby(['Country'],as_index=False).count()
+country_fig=px.choropleth(attack,locations='Country',locationmode='country names',hover_name='Country',color='Year',
+                          projection='orthographic',title='Attacks in countries[1970-2017]',labels={'Year':'Attacks'})
+country_fig.show()                        
+
+<h2>QUESTION: Which is the terrorist group most involved in attacks? <h2>
+
+df['Group'].value_counts()
+
+plt.figure(figsize=(20,10))
+plt.xlabel('Group most involved',fontsize=15)
+plt.ylabel('Number of attacks',fontsize=15)
+df['Group'].value_counts()[1:50].plot(kind='bar')
+sns.lineplot(x=df.Group,y=df.Killed)
+plt.title("Group responsible for most attacks",fontsize=20)
+
+plt.show()
+
+<h3>As shown, Taliban is the most active terrorist group. Henceforth, we further analyse its attacks more closely:<h3>
+
+Taliban=df[df['Group']=='Taliban']
+
+plt.subplots(figsize=(18,8))
+sns.countplot(x=Taliban['Year'],hue='success',data=Taliban)
+plt.xticks(rotation=90)
+plt.xlabel('Year',fontsize=15)
+plt.ylabel('Count',fontsize=15)
+plt.title('Success rate over the years',fontsize=20)
+plt.show()
+
+pd.crosstab(Taliban.Year,Taliban.Weapontype).plot(kind='area',stacked=False,figsize=(20,10))
+plt.title('Weapons used by Taliban over the years',fontsize=20)
+plt.ylabel('Quantity of weapons used',fontsize=15)
+plt.xlabel('Year',fontsize=15)
+plt.show()
+
+<H1>CONCLUSION<H1>
+
+Hereby using the exploratory data analysis on the dataset of global terrorism, as a defence analyst we determined that Taliban is the terrorist group that has caused the maximum number of attacks. Their most used weapons are explosives and firearms, and their attacks had the maximum success rate in the year 2015.
+Apart from this, we also concluded:
+1. The most widely used attack type: Bombing and explosions
+2. Most affected year: 2014
+3. Hotzones of terrorism: Middle east and North Africa, Iraq being the most affected country
+4. More than 2,00,000 people faced casualties in Iraq alone between 1970 and 2017
+
+Terrorism over the years has caused massive psychiatric and societal impacts and has affected trade and tourism. Working as one, we can significantly reduce the number of attacks and victims, to hopefully eliminate terrorist threat completely.
+
